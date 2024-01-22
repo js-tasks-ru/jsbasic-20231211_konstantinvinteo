@@ -1,55 +1,65 @@
 import createElement from "../../assets/lib/create-element.js";
 import ProductCard from "../../6-module/2-task/index.js";
+
 export default class ProductGrid {
   constructor(products) {
     this.products = products;
-    this.filters = {};
-    this.elem = this.#render();
+    this.filters = {
+      noNuts: false,
+      vegeterianOnly: false,
+      maxSpiciness: 4,
+      category: "",
+    };
+    this.render();
   }
-  updateFilter(filters) {
-    this.elem.firstElementChild.innerHTML = "";
-    for (let key in filters) {
-      this.filters[key] = filters[key];
-    }
-    this.#addProductCards();
+
+  render() {
+    this.elem = createElement(`
+      <div class="products-grid">
+        <div class="products-grid__inner">
+        </div>
+      </div>
+    `);
+
+    this.productGridInner = this.elem.querySelector(".products-grid__inner");
+    this.productCards = this.products.map((product) =>
+      Object.assign(new ProductCard(product), {
+        nuts: product.nuts,
+        vegeterian: product.vegeterian,
+        spiciness: product.spiciness,
+        category: product.category,
+      })
+    );
+
+    this.renderCards(this.productCards);
   }
-  #isShow(product, filters) {
-    if (product.nuts && filters.noNuts && filters.noNuts === true) return false;
-    if (
-      (!product.vegeterian || product.vegeterian === false) &&
-      filters.vegeterianOnly &&
-      filters.vegeterianOnly === true
-    )
-      return false;
-    if (
-      product.spiciness &&
-      filters.maxSpiciness &&
-      filters.maxSpiciness < product.spiciness
-    )
-      return false;
-    if (
-      product.category &&
-      filters.category &&
-      filters.category !== product.category
-    )
-      return false;
-    return true;
-  }
-  #addProductCards() {
-    let grid = this.elem.querySelector(".products-grid__inner");
-    for (let i = 0; i < this.products.length; i++) {
-      if (this.#isShow(this.products[i], this.filters)) {
-        grid.appendChild(new ProductCard(this.products[i]).elem);
-      }
+
+  renderCards(cards) {
+    for (let card of cards) {
+      this.productGridInner.append(card.elem);
     }
   }
-  #render() {
-    let template = `<div class="products-grid">
-    <div class="products-grid__inner">
-    </div>
-    </div>`;
-    this.elem = createElement(template);
-    this.#addProductCards();
-    return this.elem;
+
+  updateFilter(newFilter) {
+    Object.assign(this.filters, newFilter);
+
+    let filteredCards = this.productCards.filter(
+      (card) => card.spiciness <= this.filters.maxSpiciness
+    );
+
+    if (this.filters.noNuts) {
+      filteredCards = filteredCards.filter((card) => !card.nuts);
+    }
+    if (this.filters.vegeterianOnly) {
+      filteredCards = filteredCards.filter((card) => card.vegeterian);
+    }
+    if (this.filters.category) {
+      filteredCards = filteredCards.filter(
+        (card) => card.category === this.filters.category
+      );
+    }
+
+    this.productGridInner.innerHTML = "";
+    this.renderCards(filteredCards);
   }
 }

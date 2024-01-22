@@ -1,0 +1,22 @@
+{
+  "name": "webpack-lesson",
+  "version": "0.0.1",
+  "description": "10 занятие курса \"Базовый JavaScript\"",
+  "dependencies": {
+    "jquery": "^3.5.1"
+  },
+  "devDependencies": {
+    "clean-webpack-plugin": "^3.0.0",
+    "cross-env": "^7.0.0",
+    "css-loader": "^3.4.2",
+    "html-webpack-plugin": "^3.2.0",
+    "style-loader": "^1.1.3",
+    "webpack": "^4.41.6",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.10.3"
+  },
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "start": "cross-env NODE_ENV=development webpack-dev-server --open"
+  }
+}

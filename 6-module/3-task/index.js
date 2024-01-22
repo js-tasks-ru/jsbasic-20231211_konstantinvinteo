@@ -1,129 +1,100 @@
-import createElement from "../../assets/lib/create-element.js";
+import createElement from '../../assets/lib/create-element.js';
 
 export default class Carousel {
+
   constructor(slides) {
     this.slides = slides;
-    this.currentSlideIndex = 0;
-    this.elem = this.createCarousel();
-    this.addArrowListeners();
-    this.hideArrows();
+
+    this.currentSlideNumber = 0;
+    this.render();
+    this.addEventListeners();
   }
 
-  createCarousel() {
-    const carousel = document.createElement("div");
-    carousel.classList.add("carousel");
+  render() {
+    this.elem = createElement(`
+        <div class="carousel">
+          <div class="carousel__arrow carousel__arrow_right">
+            <img src="/assets/images/icons/angle-icon.svg" alt="icon" />
+          </div>
+          <div class="carousel__arrow carousel__arrow_left">
+            <img src="/assets/images/icons/angle-left-icon.svg" alt="icon" />
+          </div>
+          <div class="carousel__inner"></div>
+        </div>
+        `);
 
-    const carouselInner = document.createElement("div");
-    carouselInner.classList.add("carousel__inner");
+    let slides = this.slides.map(item => createElement(`
+      <div class="carousel__slide" data-id="${item.id}">
+        <img
+          src="/assets/images/carousel/${item.image}"
+          class="carousel__img"
+          alt="slide"
+        />
+        <div class="carousel__caption">
+          <span class="carousel__price">€${item.price.toFixed(2)}</span>
+          <div class="carousel__title">${item.name}</div>
+          <button type="button" class="carousel__button">
+            <img src="/assets/images/icons/plus-icon.svg" alt="icon" />
+          </button>
+        </div>
+      </div>`));
 
-    this.slides.forEach((slide) => {
-      const slideElem = document.createElement("div");
-      slideElem.classList.add("carousel__slide");
+    this.sub('inner').append(...slides);
 
-      const img = document.createElement("img");
-      img.src = slide.image;
-      img.alt = slide.title;
-      img.classList.add("carousel__img");
-
-      const carouselButton = document.createElement("button");
-      carouselButton.type = "button";
-      carouselButton.classList.add("carousel__button");
-      carouselButton.addEventListener("click", () => {
-        const event = new CustomEvent("product-add", {
-          detail: slide.id,
-          bubbles: true,
-        });
-        carousel.dispatchEvent(event);
-      });
-
-      slideElem.appendChild(img);
-      slideElem.appendChild(carouselButton);
-      carouselInner.appendChild(slideElem);
-    });
-
-    carousel.appendChild(carouselInner);
-
-    const carouselArrowLeft = document.createElement("div");
-    carouselArrowLeft.classList.add("carousel__arrow", "carousel__arrow_left");
-
-    const carouselArrowRight = document.createElement("div");
-    carouselArrowRight.classList.add(
-      "carousel__arrow",
-      "carousel__arrow_right"
-    );
-
-    carousel.appendChild(carouselArrowLeft);
-    carousel.appendChild(carouselArrowRight);
-
-    return carousel;
+    this.update();
   }
 
-  addArrowListeners() {
-    const carouselArrowLeft = this.elem.querySelector(".carousel__arrow_left");
-    const carouselArrowRight = this.elem.querySelector(
-      ".carousel__arrow_right"
-    );
+  addEventListeners() {
+    this.elem.onclick = ({target}) => {
+      let button = target.closest('.carousel__button');
+      if (button) {
+        let id = target.closest('[data-id]').dataset.id;
 
-    carouselArrowLeft.addEventListener("click", () => {
-      this.prevSlide();
-    });
+        this.elem.dispatchEvent(new CustomEvent('product-add', {
+          detail: id,
+          bubbles: true
+        }));
+      }
 
-    carouselArrowRight.addEventListener("click", () => {
-      this.nextSlide();
-    });
+      if (target.closest('.carousel__arrow_right')) {
+        this.next();
+      }
+
+      if (target.closest('.carousel__arrow_left')) {
+        this.prev();
+      }
+    };
   }
 
-  hideArrows() {
-    const carouselArrowLeft = this.elem.querySelector(".carousel__arrow_left");
-    const carouselArrowRight = this.elem.querySelector(
-      ".carousel__arrow_right"
-    );
+  sub(ref) {
+    return this.elem.querySelector(`.carousel__${ref}`);
+  }
 
-    carouselArrowLeft.style.display = "none";
-    if (this.slides.length <= 1) {
-      carouselArrowRight.style.display = "none";
+  next() {
+    this.currentSlideNumber++;
+    this.update();
+  }
+
+  prev() {
+    this.currentSlideNumber--;
+    this.update();
+  }
+
+  update() {
+    let offset = -this.elem.offsetWidth * this.currentSlideNumber;
+    this.sub('inner').style.transform = `translateX(${offset}px)`;
+
+    if (this.currentSlideNumber == this.slides.length - 1) {
+      this.sub('arrow_right').style.display = 'none';
+    } else {
+      this.sub('arrow_right').style.display = '';
+    }
+
+    if (this.currentSlideNumber == 0) {
+      this.sub('arrow_left').style.display = 'none';
+    } else {
+      this.sub('arrow_left').style.display = '';
     }
   }
 
-  nextSlide() {
-    const carouselInner = this.elem.querySelector(".carousel__inner");
-    const slideWidth = carouselInner.offsetWidth;
-    this.currentSlideIndex++;
-
-    carouselInner.style.transform = `translateX(-${
-      slideWidth * this.currentSlideIndex
-    }px)`;
-
-    const carouselArrowLeft = this.elem.querySelector(".carousel__arrow_left");
-    carouselArrowLeft.style.display = "block";
-
-    if (this.currentSlideIndex === this.slides.length - 1) {
-      const carouselArrowRight = this.elem.querySelector(
-        ".carousel__arrow_right"
-      );
-      carouselArrowRight.style.display = "none";
-    }
-  }
-
-  prevSlide() {
-    const carouselInner = this.elem.querySelector(".carousel__inner");
-    const slideWidth = carouselInner.offsetWidth;
-    this.currentSlideIndex--;
-
-    carouselInner.style.transform = `translateX(-${
-      slideWidth * this.currentSlideIndex
-    }px)`;
-
-    const carouselArrowRight = this.elem.querySelector(
-      ".carousel__arrow_right"
-    );
-    carouselArrowRight.style.display = "block";
-
-    if (this.currentSlideIndex === 0) {
-      const carouselArrowLeft = this.elem.querySelector(
-        ".carousel__arrow_left"
-      );
-      carouselArrowLeft.style.display = "none";
-    }
-  }
 }
